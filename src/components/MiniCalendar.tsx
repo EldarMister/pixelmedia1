@@ -7,10 +7,16 @@ export function MiniCalendar({ orders, onSelectDate }: { orders: Order[]; onSele
   const [month, setMonth] = useState(() => new Date());
   const days = useMemo(() => getCalendarDays(month), [month]);
   const eventsByDate = useMemo(() => {
-    const map = new Map<string, number>();
+    const map = new Map<string, { count: number; past: boolean }>();
     orders
       .filter((order) => !order.deletedAt)
-      .forEach((order) => map.set(order.date, (map.get(order.date) || 0) + 1));
+      .forEach((order) => {
+        const current = map.get(order.date) || { count: 0, past: order.date < toDateKey(new Date()) };
+        map.set(order.date, {
+          count: current.count + 1,
+          past: current.past || order.date < toDateKey(new Date())
+        });
+      });
     return map;
   }, [orders]);
 
@@ -40,7 +46,8 @@ export function MiniCalendar({ orders, onSelectDate }: { orders: Order[]; onSele
         ))}
         {days.map((day) => {
           const key = toDateKey(day);
-          const count = eventsByDate.get(key) || 0;
+          const event = eventsByDate.get(key);
+          const hasEvent = Boolean(event?.count);
           const today = isSameDay(day, new Date());
           return (
             <button
@@ -48,11 +55,21 @@ export function MiniCalendar({ orders, onSelectDate }: { orders: Order[]; onSele
               type="button"
               onClick={() => onSelectDate?.(key)}
               className={`mx-auto flex h-9 w-9 flex-col items-center justify-center rounded-lg text-sm transition ${
-                today ? "bg-accent text-white" : isSameMonth(day, month) ? "text-white hover:bg-white/10" : "text-slate-600"
+                hasEvent
+                  ? event?.past
+                    ? "bg-red-500/20 text-red-100 ring-1 ring-red-400/30"
+                    : "bg-emerald-500/20 text-emerald-100 ring-1 ring-emerald-400/30"
+                  : today
+                    ? "bg-accent text-white"
+                    : isSameMonth(day, month)
+                      ? "text-white hover:bg-white/10"
+                      : "text-slate-600"
               }`}
             >
               {day.getDate()}
-              {count > 0 && <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-accent" />}
+              {hasEvent && (
+                <span className={`mt-0.5 h-1.5 w-1.5 rounded-full ${event?.past ? "bg-red-300" : "bg-emerald-300"}`} />
+              )}
             </button>
           );
         })}

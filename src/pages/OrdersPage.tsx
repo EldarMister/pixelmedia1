@@ -216,40 +216,37 @@ export function OrdersPage({
           </table>
         </div>
 
-        <div className="space-y-3 p-4 md:hidden">
+        <div className="space-y-2 p-2 md:hidden">
           {filteredOrders.map((order) => (
-            <article key={order.id} className="rounded-lg border border-white/10 bg-white/5 p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <TypeBadge type={order.type} />
-                  <h2 className="mt-3 font-semibold text-white">{order.clientName}</h2>
-                  <p className="text-sm text-slate-400">{order.serviceType}</p>
+            <article key={order.id} className="rounded-lg border border-white/10 bg-white/5 p-3">
+              <div className="grid grid-cols-[1fr_auto] gap-3">
+                <div className="min-w-0">
+                  <div className="mb-1.5">
+                    <TypeBadge type={order.type} compact />
+                  </div>
+                  <h2 className="truncate text-sm font-semibold text-white">{order.clientName || "Без имени"}</h2>
+                  <p className="truncate text-xs text-slate-400">{order.serviceType || "Без услуги"}</p>
+                  <p className="mt-1 truncate text-xs text-slate-500">
+                    {formatOrderDate(order.date, order.time)} · {money(order.amount)}
+                  </p>
                 </div>
-                <StatusBadge status={order.status} />
-              </div>
-              <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <p className="text-slate-500">Дата</p>
-                  <p className="text-slate-200">{formatOrderDate(order.date, order.time)}</p>
+                <div className="flex min-w-[116px] flex-col items-end justify-between gap-2">
+                  <StatusBadge status={order.status} />
+                  <div className="flex gap-1.5">
+                    <button type="button" onClick={() => navigate(`/orders/${order.id}`)} className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-100">
+                      Открыть
+                    </button>
+                    {order.deletedAt ? (
+                      <button type="button" onClick={() => void onRestoreOrder(order.id)} className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs font-semibold text-emerald-200">
+                        <RotateCcw className="h-4 w-4" />
+                      </button>
+                    ) : (
+                      <button type="button" onClick={() => onEditOrder(order)} className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-100">
+                        Изм.
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <p className="text-slate-500">Сумма</p>
-                  <p className="font-semibold text-white">{money(order.amount)}</p>
-                </div>
-              </div>
-              <div className="mt-4 flex gap-2">
-                <button type="button" onClick={() => navigate(`/orders/${order.id}`)} className="secondary-button flex-1">
-                  Открыть
-                </button>
-                {order.deletedAt ? (
-                  <button type="button" onClick={() => void onRestoreOrder(order.id)} className="secondary-button">
-                    <RotateCcw className="h-4 w-4" />
-                  </button>
-                ) : (
-                  <button type="button" onClick={() => onEditOrder(order)} className="secondary-button">
-                    Редактировать
-                  </button>
-                )}
               </div>
             </article>
           ))}

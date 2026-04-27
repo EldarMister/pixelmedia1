@@ -1,5 +1,5 @@
 export function money(value: number) {
-  return `${Math.round(value).toLocaleString("ru-RU")} ₽`;
+  return `${Math.round(value).toLocaleString("ru-RU")} С`;
 }
 
 export function percent(value: number) {

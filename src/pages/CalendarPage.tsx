@@ -29,6 +29,7 @@ export function CalendarPage({ orders }: { orders: Order[] }) {
 
   const days = useMemo(() => getCalendarDays(month), [month]);
   const selectedEvents = (eventsByDay.get(selectedDate) || []).sort((a, b) => (a.time || "").localeCompare(b.time || ""));
+  const todayKey = toDateKey(new Date());
   const weekEvents = visibleOrders.filter((order) => {
     const now = new Date();
     const target = new Date(`${order.date}T00:00:00`);
@@ -96,30 +97,46 @@ export function CalendarPage({ orders }: { orders: Order[] }) {
             {days.map((day) => {
               const key = toDateKey(day);
               const dayEvents = eventsByDay.get(key) || [];
+              const eventState = dayEvents.length ? (key < todayKey ? "past" : "upcoming") : null;
               const selected = key === selectedDate;
               return (
                 <button
                   key={key}
                   type="button"
                   onClick={() => setSelectedDate(key)}
-                  className={`min-h-[118px] border-r border-t border-white/10 p-2 text-left transition hover:bg-white/5 ${
-                    selected ? "bg-accent/10" : ""
-                  }`}
+                  className={`min-h-[118px] border-r border-t p-2 text-left transition hover:bg-white/5 ${
+                    eventState === "upcoming"
+                      ? "border-emerald-400/20 bg-emerald-500/10"
+                      : eventState === "past"
+                        ? "border-red-400/20 bg-red-500/10"
+                        : "border-white/10"
+                  } ${selected ? "ring-1 ring-accent/60" : ""}`}
                 >
                   <span
                     className={`inline-flex h-8 w-8 items-center justify-center rounded-lg text-sm font-semibold ${
-                      isSameDay(day, new Date())
-                        ? "bg-accent text-white"
-                        : isSameMonth(day, month)
-                          ? "text-white"
-                          : "text-slate-600"
-                    }`}
+                      eventState === "upcoming"
+                        ? "bg-emerald-500/25 text-emerald-100"
+                        : eventState === "past"
+                          ? "bg-red-500/25 text-red-100"
+                          : isSameDay(day, new Date())
+                            ? "bg-accent text-white"
+                            : isSameMonth(day, month)
+                              ? "text-white"
+                              : "text-slate-600"
+                  }`}
                   >
                     {day.getDate()}
                   </span>
                   <div className="mt-2 space-y-1">
                     {dayEvents.slice(0, 2).map((order) => (
-                      <span key={order.id} className="block truncate rounded-lg border border-white/10 bg-white/[0.06] px-2 py-1 text-xs text-slate-200">
+                      <span
+                        key={order.id}
+                        className={`block truncate rounded-lg border px-2 py-1 text-xs ${
+                          key < todayKey
+                            ? "border-red-400/25 bg-red-500/15 text-red-100"
+                            : "border-emerald-400/25 bg-emerald-500/15 text-emerald-100"
+                        }`}
+                      >
                         {order.time?.slice(0, 5)} {order.clientName}
                       </span>
                     ))}

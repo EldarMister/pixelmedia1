@@ -30,6 +30,7 @@ export default function App() {
   } = useCrmData();
   const [search, setSearch] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
 
   const openNewOrder = () => {
@@ -68,7 +69,7 @@ export default function App() {
   };
 
   return (
-    <Layout onNewOrder={openNewOrder} search={search} onSearchChange={setSearch}>
+    <Layout onNewOrder={openNewOrder} onOpenAi={() => setAiOpen(true)} search={search} onSearchChange={setSearch}>
       {dbAvailable === false && (
         <div className="mb-4 rounded-lg border border-amber-400/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
           PostgreSQL не подключён: интерфейс работает через localStorage fallback. Для постоянного хранения задайте DATABASE_URL.
@@ -127,7 +128,7 @@ export default function App() {
         onClose={() => setDrawerOpen(false)}
         onSubmit={submitOrder}
       />
-      <AiAssistant orders={orders} expenses={expenses} />
+      <AiAssistant orders={orders} expenses={expenses} open={aiOpen} onClose={() => setAiOpen(false)} />
     </Layout>
   );
 }

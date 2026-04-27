@@ -1,4 +1,4 @@
-import { Bot, Send, Sparkles, X } from "lucide-react";
+import { Bot, Send, X } from "lucide-react";
 import type { FormEvent } from "react";
 import { useState } from "react";
 import { api } from "../api/client";
@@ -17,8 +17,17 @@ const quickPrompts = [
   "Как добавить заказ?"
 ];
 
-export function AiAssistant({ orders, expenses = [] }: { orders: Order[]; expenses?: Expense[] }) {
-  const [open, setOpen] = useState(false);
+export function AiAssistant({
+  orders,
+  expenses = [],
+  open,
+  onClose
+}: {
+  orders: Order[];
+  expenses?: Expense[];
+  open: boolean;
+  onClose: () => void;
+}) {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -56,15 +65,6 @@ export function AiAssistant({ orders, expenses = [] }: { orders: Order[]; expens
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="fixed bottom-[5.3rem] right-4 z-40 inline-flex items-center gap-2 rounded-lg border border-violet-300/30 bg-violet-500/20 px-4 py-3 text-sm font-semibold text-white shadow-soft backdrop-blur transition hover:bg-violet-500/30 md:bottom-8 md:right-8"
-      >
-        <Sparkles className="h-5 w-5" />
-        AI помощник
-      </button>
-
       {open && (
         <div className="fixed inset-0 z-50 flex items-end justify-end bg-black/50 p-3 backdrop-blur-sm md:p-6">
           <section className="panel flex h-[620px] max-h-[88vh] w-full max-w-[420px] flex-col overflow-hidden">
@@ -78,7 +78,7 @@ export function AiAssistant({ orders, expenses = [] }: { orders: Order[]; expens
                   <p className="text-xs text-slate-400">Помощь по заказам и оплатам</p>
                 </div>
               </div>
-              <button type="button" onClick={() => setOpen(false)} className="icon-button" aria-label="Закрыть">
+              <button type="button" onClick={onClose} className="icon-button" aria-label="Закрыть">
                 <X className="h-5 w-5" />
               </button>
             </div>

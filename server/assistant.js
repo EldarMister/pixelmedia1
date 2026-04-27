@@ -5,7 +5,7 @@ const typeLabels = {
   design: "Дизайн"
 };
 
-const money = (value) => `${Math.round(Number(value || 0)).toLocaleString("ru-RU")} ₽`;
+const money = (value) => `${Math.round(Number(value || 0)).toLocaleString("ru-RU")} С`;
 
 const clean = (value) => String(value || "").trim().toLowerCase().replace(/ё/g, "е");
 

@@ -1,4 +1,4 @@
-import { BarChart3, CalendarDays, Home, Plus, Search, ShoppingBag, UserRound } from "lucide-react";
+import { BarChart3, CalendarDays, Home, Plus, Search, ShoppingBag, Sparkles, UserRound } from "lucide-react";
 import type { ReactNode } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { initials } from "../lib/format";
@@ -13,11 +13,13 @@ const navItems = [
 export function Layout({
   children,
   onNewOrder,
+  onOpenAi,
   search,
   onSearchChange
 }: {
   children: ReactNode;
   onNewOrder: () => void;
+  onOpenAi: () => void;
   search: string;
   onSearchChange: (value: string) => void;
 }) {
@@ -69,7 +71,17 @@ export function Layout({
             ))}
           </nav>
 
-          <button type="button" onClick={onNewOrder} className="primary-button ml-auto md:ml-2">
+          <button
+            type="button"
+            onClick={onOpenAi}
+            className="icon-button ml-auto shrink-0 border-violet-300/25 bg-violet-500/15 text-violet-100 md:ml-2"
+            aria-label="AI помощник"
+            title="AI помощник"
+          >
+            <Sparkles className="h-5 w-5" />
+          </button>
+
+          <button type="button" onClick={onNewOrder} className="primary-button shrink-0 md:ml-0">
             <span className="hidden sm:inline">Новый заказ</span>
             <span className="sm:hidden">Новый</span>
             <Plus className="h-4 w-4" />
