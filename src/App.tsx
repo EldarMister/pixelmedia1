@@ -15,6 +15,7 @@ export default function App() {
   const navigate = useNavigate();
   const {
     orders,
+    expenses,
     loading,
     error,
     dbAvailable,
@@ -126,7 +127,7 @@ export default function App() {
         onClose={() => setDrawerOpen(false)}
         onSubmit={submitOrder}
       />
-      <AiAssistant orders={orders} />
+      <AiAssistant orders={orders} expenses={expenses} />
     </Layout>
   );
 }

@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { hasDatabase, pool, query, transaction } from "./db.js";
 import { runMigrations } from "./migrate.js";
+import { generateAssistantAnswer } from "./assistant.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -525,32 +526,21 @@ app.delete("/api/expenses/:id", asyncRoute(async (req, res) => {
 }));
 
 app.post("/api/ai/chat", asyncRoute(async (req, res) => {
+  if (!hasDatabase && req.body?.context?.orders) {
+    res.json({
+      answer: generateAssistantAnswer(req.body.message, req.body.context.orders, req.body.context.expenses || [])
+    });
+    return;
+  }
+
   const ordersResult = await query(
     `SELECT ${orderColumns} FROM orders WHERE deleted_at IS NULL ORDER BY date ASC LIMIT 200`
   );
   const orders = ordersResult.rows.map(toCamelOrder);
-  const today = new Date().toISOString().slice(0, 10);
-  const todayOrders = orders.filter((order) => String(order.date).slice(0, 10) === today);
-  const waitingPayments = orders.filter((order) => order.paymentStatus !== "Оплачено");
-  const nextOrder = orders.find((order) => String(order.date).slice(0, 10) >= today);
-  const message = String(req.body.message || "").toLowerCase();
+  const expensesResult = await query("SELECT * FROM expenses ORDER BY date DESC LIMIT 200");
+  const expenses = expensesResult.rows.map(toCamelExpense);
 
-  let answer = `В CRM ${orders.length} активных заказов. Ближайший заказ: ${
-    nextOrder ? `${nextOrder.clientName}, ${nextOrder.date}` : "не найден"
-  }.`;
-  if (message.includes("сегодня")) {
-    answer = todayOrders.length
-      ? `Сегодня ${todayOrders.length} события: ${todayOrders
-          .map((order) => `${order.time || "--:--"} ${order.clientName}`)
-          .join(", ")}.`
-      : "На сегодня заказов и событий нет.";
-  }
-  if (message.includes("оплат") || message.includes("долг")) {
-    const amount = waitingPayments.reduce((sum, order) => sum + Math.max(order.amount - order.deposit, 0), 0);
-    answer = `Ожидается оплата по ${waitingPayments.length} заказам. Остаток к оплате: ${amount.toLocaleString("ru-RU")} ₽.`;
-  }
-
-  res.json({ answer });
+  res.json({ answer: generateAssistantAnswer(req.body.message, orders, expenses) });
 }));
 
 const distDir = path.join(rootDir, "dist");

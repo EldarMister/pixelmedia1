@@ -2,34 +2,56 @@ import { Bot, Send, Sparkles, X } from "lucide-react";
 import type { FormEvent } from "react";
 import { useState } from "react";
 import { api } from "../api/client";
-import type { Order } from "../types";
+import type { Expense, Order } from "../types";
 
 interface Message {
   role: "user" | "assistant";
   text: string;
 }
 
-export function AiAssistant({ orders }: { orders: Order[] }) {
+const quickPrompts = [
+  "Что сегодня?",
+  "Кто должен оплатить?",
+  "Ближайшие заказы",
+  "Какая выручка?",
+  "Как добавить заказ?"
+];
+
+export function AiAssistant({ orders, expenses = [] }: { orders: Order[]; expenses?: Expense[] }) {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      text: "Я могу быстро подсказать, что сегодня, какие оплаты ожидаются и какие заказы ближайшие."
+      text: "Я помогу по CRM: заказы, оплаты, календарь, отчёты и быстрые действия. Спросите обычным текстом или выберите подсказку ниже."
     }
   ]);
   const [loading, setLoading] = useState(false);
 
-  const submit = async (event: FormEvent) => {
-    event.preventDefault();
-    if (!input.trim()) return;
-    const message = input.trim();
+  const ask = async (message: string) => {
+    if (!message.trim()) return;
     setMessages((current) => [...current, { role: "user", text: message }]);
     setInput("");
     setLoading(true);
-    const response = await api.askAi(message, orders);
-    setMessages((current) => [...current, { role: "assistant", text: response.answer }]);
-    setLoading(false);
+    try {
+      const response = await api.askAi(message, orders, expenses);
+      setMessages((current) => [...current, { role: "assistant", text: response.answer }]);
+    } catch (_error) {
+      setMessages((current) => [
+        ...current,
+        {
+          role: "assistant",
+          text: "Не удалось получить ответ от AI endpoint. Проверьте API и подключение к базе."
+        }
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    await ask(input.trim());
   };
 
   return (
@@ -48,12 +70,12 @@ export function AiAssistant({ orders }: { orders: Order[] }) {
           <section className="panel flex h-[620px] max-h-[88vh] w-full max-w-[420px] flex-col overflow-hidden">
             <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
               <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-500/18 text-violet-200">
+                <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-500/20 text-violet-200">
                   <Bot className="h-5 w-5" />
                 </span>
                 <div>
                   <h2 className="font-semibold text-white">AI помощник</h2>
-                  <p className="text-xs text-slate-400">Черновой анализ по данным CRM</p>
+                  <p className="text-xs text-slate-400">Помощь по заказам и оплатам</p>
                 </div>
               </div>
               <button type="button" onClick={() => setOpen(false)} className="icon-button" aria-label="Закрыть">
@@ -71,23 +93,38 @@ export function AiAssistant({ orders }: { orders: Order[] }) {
                       : "border-white/10 bg-white/5 text-slate-200"
                   }`}
                 >
-                  {message.text}
+                  <span className="whitespace-pre-line">{message.text}</span>
                 </div>
               ))}
               {loading && <div className="text-sm text-slate-400">Проверяю данные...</div>}
             </div>
 
-            <form onSubmit={submit} className="flex gap-2 border-t border-white/10 p-3">
-              <input
-                className="field"
-                value={input}
-                onChange={(event) => setInput(event.target.value)}
-                placeholder="Например: что сегодня?"
-              />
-              <button type="submit" className="icon-button" aria-label="Отправить">
-                <Send className="h-5 w-5" />
-              </button>
-            </form>
+            <div className="border-t border-white/10 p-3">
+              <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
+                {quickPrompts.map((prompt) => (
+                  <button
+                    key={prompt}
+                    type="button"
+                    onClick={() => void ask(prompt)}
+                    disabled={loading}
+                    className="shrink-0 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-slate-200 transition hover:border-accent/40 hover:bg-accent/10 disabled:opacity-60"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+              <form onSubmit={submit} className="flex gap-2">
+                <input
+                  className="field"
+                  value={input}
+                  onChange={(event) => setInput(event.target.value)}
+                  placeholder="Например: кто должен оплатить?"
+                />
+                <button type="submit" className="icon-button" aria-label="Отправить" disabled={loading}>
+                  <Send className="h-5 w-5" />
+                </button>
+              </form>
+            </div>
           </section>
         </div>
       )}

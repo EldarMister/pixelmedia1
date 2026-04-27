@@ -1,4 +1,5 @@
 import { fallbackStore } from "../data/fallbackStore";
+import { generateAssistantAnswer } from "../lib/assistant";
 import type { Expense, Order, OrderPayload, OrderNote, Period, ReportData } from "../types";
 
 const API_BASE = "";
@@ -153,36 +154,15 @@ export const api = {
     );
   },
 
-  askAi(message: string, orders: Order[]) {
+  askAi(message: string, orders: Order[], expenses: Expense[] = []) {
     return withFallback<{ answer: string }>(
       () =>
         request<{ answer: string }>("/api/ai/chat", {
           method: "POST",
-          body: JSON.stringify({ message })
+          body: JSON.stringify({ message, context: { orders, expenses } })
         }),
       () => {
-        const today = new Date().toISOString().slice(0, 10);
-        const todayOrders = orders.filter((order) => order.date === today && !order.deletedAt);
-        const waiting = orders.filter((order) => !order.deletedAt && order.paymentStatus !== "Оплачено");
-        const normalized = message.toLowerCase();
-        if (normalized.includes("сегодня")) {
-          return {
-            answer: todayOrders.length
-              ? `Сегодня ${todayOrders.length} события: ${todayOrders
-                  .map((order) => `${order.time || "--:--"} ${order.clientName}`)
-                  .join(", ")}.`
-              : "На сегодня событий нет."
-          };
-        }
-        if (normalized.includes("оплат") || normalized.includes("долг")) {
-          const amount = waiting.reduce((sum, order) => sum + Math.max(order.amount - order.deposit, 0), 0);
-          return {
-            answer: `Ожидается оплата по ${waiting.length} заказам. Остаток: ${Math.round(amount).toLocaleString("ru-RU")} ₽.`
-          };
-        }
-        return {
-          answer: `В CRM ${orders.filter((order) => !order.deletedAt).length} активных заказов. Могу подсказать ближайшие события, оплаты и статусы.`
-        };
+        return { answer: generateAssistantAnswer(message, orders, expenses) };
       }
     );
   }
