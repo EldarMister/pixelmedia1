@@ -14,7 +14,36 @@ function id(prefix: string) {
 }
 
 function eventDate(date: string, time = "10:00") {
-  return `${date}T${time}:00.000Z`;
+  return `${date || toDateKey(new Date())}T${time || "10:00"}:00.000Z`;
+}
+
+function normalizeOrderPayload(payload: OrderPayload): OrderPayload {
+  const clientName = payload.clientName?.trim() || payload.title?.trim() || "Без имени";
+  const serviceType = payload.serviceType?.trim() || "Без услуги";
+
+  return {
+    ...payload,
+    title: payload.title?.trim() || clientName,
+    clientName,
+    phone: payload.phone?.trim() || "",
+    email: payload.email?.trim() || "",
+    serviceType,
+    date: payload.date || toDateKey(new Date()),
+    time: payload.time || "",
+    location: payload.location?.trim() || "",
+    amount: Number.isFinite(Number(payload.amount)) ? Number(payload.amount) : 0,
+    deposit: Number.isFinite(Number(payload.deposit)) ? Number(payload.deposit) : 0,
+    operator: payload.operator?.trim() || "",
+    details: payload.details?.trim() || "",
+    note: payload.note?.trim() || "",
+    services: payload.services?.length
+      ? payload.services.map((service) => ({
+          name: service.name?.trim() || serviceType,
+          price: Number.isFinite(Number(service.price)) ? Number(service.price) : 0,
+          completed: Boolean(service.completed)
+        }))
+      : [{ name: serviceType, price: Number(payload.amount) || 0, completed: false }]
+  };
 }
 
 function seedOrders(): Order[] {
@@ -278,11 +307,12 @@ export const fallbackStore = {
   },
 
   createOrder(payload: OrderPayload) {
+    const normalizedPayload = normalizeOrderPayload(payload);
     const orderId = id("order");
     const createdAt = new Date().toISOString();
     const services =
-      payload.services?.length
-        ? payload.services.map((service) => ({
+      normalizedPayload.services?.length
+        ? normalizedPayload.services.map((service) => ({
             ...service,
             id: id("service"),
             orderId
@@ -291,14 +321,14 @@ export const fallbackStore = {
             {
               id: id("service"),
               orderId,
-              name: payload.serviceType,
-              price: payload.amount,
+              name: normalizedPayload.serviceType,
+              price: normalizedPayload.amount,
               completed: false
             }
           ];
 
     const order: Order = {
-      ...payload,
+      ...normalizedPayload,
       id: orderId,
       createdAt,
       updatedAt: createdAt,
@@ -319,8 +349,8 @@ export const fallbackStore = {
           status: "Выполнено"
         }
       ],
-      notes: payload.note
-        ? [{ id: id("note"), orderId, text: payload.note, createdAt }]
+      notes: normalizedPayload.note
+        ? [{ id: id("note"), orderId, text: normalizedPayload.note, createdAt }]
         : []
     };
 
@@ -329,19 +359,20 @@ export const fallbackStore = {
   },
 
   updateOrder(orderId: string, payload: OrderPayload) {
+    const normalizedPayload = normalizeOrderPayload(payload);
     let updatedOrder: Order | undefined;
     const orders = this.orders().map((order) => {
       if (order.id !== orderId) return order;
       updatedOrder = {
         ...order,
-        ...payload,
+        ...normalizedPayload,
         updatedAt: new Date().toISOString(),
-        email: payload.email || null,
-        time: payload.time || null,
-        location: payload.location || null,
-        operator: payload.operator || null,
-        details: payload.details || null,
-        services: payload.services?.map((service) => ({
+        email: normalizedPayload.email || null,
+        time: normalizedPayload.time || null,
+        location: normalizedPayload.location || null,
+        operator: normalizedPayload.operator || null,
+        details: normalizedPayload.details || null,
+        services: normalizedPayload.services?.map((service) => ({
           id: id("service"),
           orderId,
           ...service

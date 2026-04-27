@@ -90,16 +90,40 @@ function parseServices(text: string, fallbackName: string, fallbackPrice: number
     .map((line) => line.trim())
     .filter(Boolean);
   if (!lines.length) {
-    return [{ name: fallbackName || "Услуга", price: fallbackPrice, completed: false }];
+    return [{ name: fallbackName || "Без услуги", price: fallbackPrice || 0, completed: false }];
   }
   return lines.map((line) => {
     const [name, price] = line.split(/[—-]/).map((part) => part.trim());
     return {
-      name,
+      name: name || "Без услуги",
       price: Number(price?.replace(/\D/g, "") || 0),
       completed: false
     };
   });
+}
+
+function normalizePayload(payload: OrderPayload, servicesText: string): OrderPayload {
+  const clientName = payload.clientName.trim() || payload.title.trim() || "Без имени";
+  const serviceType = payload.serviceType.trim() || "Без услуги";
+  const today = new Date().toISOString().slice(0, 10);
+
+  return {
+    ...payload,
+    title: payload.title.trim() || clientName,
+    clientName,
+    phone: payload.phone.trim(),
+    email: payload.email?.trim() || "",
+    serviceType,
+    date: payload.date || today,
+    time: payload.time || "",
+    location: payload.location?.trim() || "",
+    amount: Number.isFinite(Number(payload.amount)) ? Number(payload.amount) : 0,
+    deposit: Number.isFinite(Number(payload.deposit)) ? Number(payload.deposit) : 0,
+    operator: payload.operator?.trim() || "",
+    details: payload.details?.trim() || "",
+    note: payload.note?.trim() || "",
+    services: parseServices(servicesText, serviceType, Number(payload.amount) || 0)
+  };
 }
 
 export function OrderFormDrawer({
@@ -133,14 +157,12 @@ export function OrderFormDrawer({
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     setSaving(true);
-    const nextPayload = {
-      ...payload,
-      title: payload.title || payload.clientName,
-      services: parseServices(servicesText, payload.serviceType, payload.amount)
-    };
-    await onSubmit(nextPayload, order?.id);
-    setSaving(false);
-    onClose();
+    try {
+      await onSubmit(normalizePayload(payload, servicesText), order?.id);
+      onClose();
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -176,12 +198,12 @@ export function OrderFormDrawer({
 
             <label>
               <span className="label">{hints.client}</span>
-              <input required className="field" value={payload.clientName} onChange={(event) => update("clientName", event.target.value)} />
+              <input className="field" value={payload.clientName} onChange={(event) => update("clientName", event.target.value)} placeholder="Можно оставить пустым" />
             </label>
 
             <label>
               <span className="label">Телефон</span>
-              <input required className="field" value={payload.phone} onChange={(event) => update("phone", event.target.value)} />
+              <input className="field" value={payload.phone} onChange={(event) => update("phone", event.target.value)} placeholder="Можно добавить позже" />
             </label>
 
             <label>
@@ -191,12 +213,12 @@ export function OrderFormDrawer({
 
             <label>
               <span className="label">{hints.service}</span>
-              <input required className="field" value={payload.serviceType} onChange={(event) => update("serviceType", event.target.value)} />
+              <input className="field" value={payload.serviceType} onChange={(event) => update("serviceType", event.target.value)} placeholder="Например: фото + видео" />
             </label>
 
             <label>
               <span className="label">{hints.date}</span>
-              <input required className="field" type="date" value={payload.date} onChange={(event) => update("date", event.target.value)} />
+              <input className="field" type="date" value={payload.date} onChange={(event) => update("date", event.target.value)} />
             </label>
 
             <label>

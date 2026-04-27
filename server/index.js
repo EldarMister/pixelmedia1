@@ -35,13 +35,13 @@ const orderColumns = `
 `;
 
 const parseOrderInput = (body) => ({
-  type: body.type,
-  title: body.title || body.client_name || body.clientName || "Новый заказ",
-  client_name: body.client_name || body.clientName || "",
+  type: body.type || "wedding",
+  title: body.title || body.client_name || body.clientName || "Без имени",
+  client_name: body.client_name || body.clientName || body.title || "Без имени",
   phone: body.phone || "",
   email: body.email || null,
-  service_type: body.service_type || body.serviceType || "",
-  date: body.date,
+  service_type: body.service_type || body.serviceType || "Без услуги",
+  date: body.date || new Date().toISOString().slice(0, 10),
   time: body.time || null,
   location: body.location || null,
   amount: Number(body.amount || 0),
@@ -116,8 +116,7 @@ const normalizeServices = (body) => {
     }));
   }
 
-  const serviceType = body.service_type || body.serviceType;
-  if (!serviceType) return [];
+  const serviceType = body.service_type || body.serviceType || "Без услуги";
   return [
     {
       name: serviceType,

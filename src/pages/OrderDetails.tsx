@@ -72,10 +72,10 @@ export function OrderDetails({
               Заказы
             </Link>
             <span className="text-slate-600">/</span>
-            <span className="text-slate-400">{order.clientName}</span>
+            <span className="text-slate-400">{order.clientName || "Без имени"}</span>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-3xl font-bold text-white">{order.clientName}</h1>
+            <h1 className="text-3xl font-bold text-white">{order.clientName || "Без имени"}</h1>
             <StatusBadge status={order.status} />
             <TypeBadge type={order.type} />
           </div>
@@ -103,11 +103,11 @@ export function OrderDetails({
             <h2 className="mb-5 text-xl font-bold text-white">Основная информация</h2>
             <div className="grid gap-1">
               {[
-                { icon: UserRound, label: "Клиент", value: order.clientName },
-                { icon: Phone, label: "Телефон", value: order.phone },
+                { icon: UserRound, label: "Клиент", value: order.clientName || "Без имени" },
+                { icon: Phone, label: "Телефон", value: order.phone || "Не указан" },
                 { icon: CalendarDays, label: "Дата", value: formatLongDate(order.date, order.time) },
                 { icon: MapPin, label: "Место", value: order.location || "Не указано" },
-                { icon: ClipboardList, label: "Тип услуги", value: order.serviceType },
+                { icon: ClipboardList, label: "Тип услуги", value: order.serviceType || "Без услуги" },
                 { icon: UserRound, label: "Оператор", value: order.operator || "Не назначен" },
                 { icon: FileText, label: "Детали", value: order.details || "Нет деталей" }
               ].map((item) => {

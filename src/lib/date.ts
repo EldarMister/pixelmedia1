@@ -25,12 +25,14 @@ export function toMonthKey(date: Date) {
 
 export function formatOrderDate(date: string, time?: string | null) {
   const value = new Date(`${date}T00:00:00`);
+  if (Number.isNaN(value.getTime())) return time ? `Дата не указана · ${time.slice(0, 5)}` : "Дата не указана";
   const formatted = ruDate.format(value).replace(".", "");
   return time ? `${formatted} · ${time.slice(0, 5)}` : formatted;
 }
 
 export function formatLongDate(date: string, time?: string | null) {
   const value = new Date(`${date}T00:00:00`);
+  if (Number.isNaN(value.getTime())) return time ? `Дата не указана · ${time.slice(0, 5)}` : "Дата не указана";
   const formatted = ruDateLong.format(value).replace(".", "");
   return time ? `${formatted} · ${time.slice(0, 5)}` : formatted;
 }
