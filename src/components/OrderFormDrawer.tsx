@@ -24,6 +24,13 @@ const emptyPayload: OrderPayload = {
   services: []
 };
 
+const moneyInputValue = (value: number) => (value > 0 ? String(value) : "");
+
+const parseMoneyInput = (value: string) => {
+  const normalized = value.replace(/[^\d]/g, "");
+  return normalized ? Number(normalized) : 0;
+};
+
 const typeHints: Record<OrderType, { client: string; date: string; location: string; service: string }> = {
   wedding: {
     client: "Клиент / пара",
@@ -178,7 +185,7 @@ export function OrderFormDrawer({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-5">
+        <div className="dark-scrollbar flex-1 overflow-y-auto p-5">
           <div className="grid gap-4 md:grid-cols-2">
             <label>
               <span className="label">Тип заказа</span>
@@ -228,12 +235,24 @@ export function OrderFormDrawer({
 
             <label>
               <span className="label">Сумма</span>
-              <input className="field" type="number" min="0" value={payload.amount} onChange={(event) => update("amount", Number(event.target.value))} />
+              <input
+                className="field"
+                inputMode="numeric"
+                value={moneyInputValue(payload.amount)}
+                onChange={(event) => update("amount", parseMoneyInput(event.target.value))}
+                placeholder="Например: 85000"
+              />
             </label>
 
             <label>
               <span className="label">Аванс</span>
-              <input className="field" type="number" min="0" value={payload.deposit} onChange={(event) => update("deposit", Number(event.target.value))} />
+              <input
+                className="field"
+                inputMode="numeric"
+                value={moneyInputValue(payload.deposit)}
+                onChange={(event) => update("deposit", parseMoneyInput(event.target.value))}
+                placeholder="Например: 20000"
+              />
             </label>
 
             <label>
