@@ -3,6 +3,7 @@ import type { Expense, Order, OrderNote, OrderPayload, OrderService, OrderTimeli
 
 const ORDERS_KEY = "pixelmedia.orders";
 const EXPENSES_KEY = "pixelmedia.expenses";
+const TRASH_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 
 const now = new Date();
 
@@ -278,9 +279,20 @@ function write<T>(key: string, value: T) {
   return value;
 }
 
+function isExpiredTrash(order: Order) {
+  if (!order.deletedAt) return false;
+  const deletedAt = new Date(order.deletedAt).getTime();
+  return Number.isFinite(deletedAt) && Date.now() - deletedAt > TRASH_RETENTION_MS;
+}
+
 export const fallbackStore = {
   orders() {
-    return read<Order[]>(ORDERS_KEY, seedOrders);
+    const orders = read<Order[]>(ORDERS_KEY, seedOrders);
+    const retainedOrders = orders.filter((order) => !isExpiredTrash(order));
+    if (retainedOrders.length !== orders.length) {
+      write(ORDERS_KEY, retainedOrders);
+    }
+    return retainedOrders;
   },
 
   saveOrders(orders: Order[]) {

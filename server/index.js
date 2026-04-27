@@ -14,6 +14,7 @@ const rootDir = path.resolve(__dirname, "..");
 const app = express();
 const port = Number(process.env.PORT || 4000);
 const corsOrigin = process.env.CORS_ORIGIN || "http://localhost:5173";
+const trashRetentionDays = 7;
 
 app.use(
   cors({
@@ -33,6 +34,15 @@ const orderColumns = `
   amount::float AS amount, deposit::float AS deposit, status, payment_status,
   operator, details, created_at, updated_at, deleted_at
 `;
+
+const purgeExpiredDeletedOrders = async () => {
+  if (!hasDatabase) return 0;
+  const result = await query(
+    "DELETE FROM orders WHERE deleted_at IS NOT NULL AND deleted_at < now() - ($1::int * interval '1 day')",
+    [trashRetentionDays]
+  );
+  return result.rowCount || 0;
+};
 
 const parseOrderInput = (body) => ({
   type: body.type || "wedding",
@@ -176,6 +186,7 @@ app.get("/api/health", asyncRoute(async (_req, res) => {
 }));
 
 app.get("/api/orders", asyncRoute(async (req, res) => {
+  await purgeExpiredDeletedOrders();
   const includeDeleted = req.query.includeDeleted === "true";
   const trashOnly = req.query.trash === "true";
   const clauses = [];
@@ -206,6 +217,7 @@ app.get("/api/orders", asyncRoute(async (req, res) => {
 }));
 
 app.get("/api/orders/:id", asyncRoute(async (req, res) => {
+  await purgeExpiredDeletedOrders();
   const orderResult = await query(`SELECT ${orderColumns} FROM orders WHERE id = $1`, [
     req.params.id
   ]);
@@ -429,6 +441,7 @@ app.patch("/api/timeline/:id", asyncRoute(async (req, res) => {
 }));
 
 app.get("/api/calendar", asyncRoute(async (req, res) => {
+  await purgeExpiredDeletedOrders();
   const month = String(req.query.month || "").match(/^\d{4}-\d{2}$/)
     ? String(req.query.month)
     : new Date().toISOString().slice(0, 7);
@@ -451,6 +464,7 @@ app.get("/api/calendar", asyncRoute(async (req, res) => {
 }));
 
 app.get("/api/reports", asyncRoute(async (req, res) => {
+  await purgeExpiredDeletedOrders();
   const period = ["today", "week", "month", "year"].includes(req.query.period)
     ? req.query.period
     : "week";
@@ -532,6 +546,7 @@ app.post("/api/ai/chat", asyncRoute(async (req, res) => {
     return;
   }
 
+  await purgeExpiredDeletedOrders();
   const ordersResult = await query(
     `SELECT ${orderColumns} FROM orders WHERE deleted_at IS NULL ORDER BY date ASC LIMIT 200`
   );
@@ -570,6 +585,11 @@ try {
     console.log(`Database migration skipped: ${migrationResult.reason}`);
   } else {
     console.log("Database schema is ready.");
+  }
+
+  const purgedOrders = await purgeExpiredDeletedOrders();
+  if (purgedOrders) {
+    console.log(`Purged ${purgedOrders} expired trashed orders.`);
   }
 
   server = app.listen(port, () => {
