@@ -11,8 +11,31 @@ const ruDateLong = new Intl.DateTimeFormat("ru-RU", {
   weekday: "short"
 });
 
+function parseDateValue(date?: Date | string | null) {
+  if (!date) return null;
+  if (date instanceof Date) {
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  const value = date.trim();
+  const isoMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) {
+    return new Date(Number(isoMatch[1]), Number(isoMatch[2]) - 1, Number(isoMatch[3]));
+  }
+
+  const ruMatch = value.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+  if (ruMatch) {
+    return new Date(Number(ruMatch[3]), Number(ruMatch[2]) - 1, Number(ruMatch[1]));
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+}
+
 export function toDateKey(date: Date | string) {
-  const value = typeof date === "string" ? new Date(`${date}T00:00:00`) : date;
+  const value = parseDateValue(date);
+  if (!value) return "";
   const year = value.getFullYear();
   const month = String(value.getMonth() + 1).padStart(2, "0");
   const day = String(value.getDate()).padStart(2, "0");
@@ -24,15 +47,15 @@ export function toMonthKey(date: Date) {
 }
 
 export function formatOrderDate(date: string, time?: string | null) {
-  const value = new Date(`${date}T00:00:00`);
-  if (Number.isNaN(value.getTime())) return time ? `Дата не указана · ${time.slice(0, 5)}` : "Дата не указана";
+  const value = parseDateValue(date);
+  if (!value) return time ? `Дата не указана · ${time.slice(0, 5)}` : "Дата не указана";
   const formatted = ruDate.format(value).replace(".", "");
   return time ? `${formatted} · ${time.slice(0, 5)}` : formatted;
 }
 
 export function formatLongDate(date: string, time?: string | null) {
-  const value = new Date(`${date}T00:00:00`);
-  if (Number.isNaN(value.getTime())) return time ? `Дата не указана · ${time.slice(0, 5)}` : "Дата не указана";
+  const value = parseDateValue(date);
+  if (!value) return time ? `Дата не указана · ${time.slice(0, 5)}` : "Дата не указана";
   const formatted = ruDateLong.format(value).replace(".", "");
   return time ? `${formatted} · ${time.slice(0, 5)}` : formatted;
 }

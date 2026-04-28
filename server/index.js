@@ -70,7 +70,7 @@ const toCamelOrder = (row) => ({
   phone: row.phone,
   email: row.email,
   serviceType: row.service_type,
-  date: row.date,
+  date: normalizeDate(row.date),
   time: row.time,
   location: row.location,
   amount: Number(row.amount || 0),
@@ -83,6 +83,13 @@ const toCamelOrder = (row) => ({
   updatedAt: row.updated_at,
   deletedAt: row.deleted_at
 });
+
+function normalizeDate(value) {
+  if (!value) return new Date().toISOString().slice(0, 10);
+  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  const match = String(value).match(/^\d{4}-\d{2}-\d{2}/);
+  return match ? match[0] : String(value);
+}
 
 const toCamelService = (row) => ({
   id: row.id,
