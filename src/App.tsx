@@ -4,7 +4,6 @@ import { AiAssistant } from "./components/AiAssistant";
 import { Layout } from "./components/Layout";
 import { OrderFormDrawer } from "./components/OrderFormDrawer";
 import { useCrmData } from "./hooks/useCrmData";
-import { CalendarPage } from "./pages/CalendarPage";
 import { Dashboard } from "./pages/Dashboard";
 import { OrderDetails } from "./pages/OrderDetails";
 import { OrdersPage } from "./pages/OrdersPage";
@@ -116,7 +115,7 @@ export default function App() {
               />
             }
           />
-          <Route path="/calendar" element={<CalendarPage orders={orders} />} />
+          <Route path="/calendar" element={<Navigate to="/" replace />} />
           <Route path="/reports" element={<ReportsPage onAddExpense={addReportExpense} onDeleteExpense={deleteExpense} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

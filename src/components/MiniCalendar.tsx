@@ -3,7 +3,15 @@ import { useMemo, useState } from "react";
 import { formatMonth, getCalendarDays, isSameDay, isSameMonth, toDateKey } from "../lib/date";
 import type { Order } from "../types";
 
-export function MiniCalendar({ orders, onSelectDate }: { orders: Order[]; onSelectDate?: (date: string) => void }) {
+export function MiniCalendar({
+  orders,
+  selectedDate,
+  onSelectDate
+}: {
+  orders: Order[];
+  selectedDate?: string;
+  onSelectDate?: (date: string) => void;
+}) {
   const [month, setMonth] = useState(() => new Date());
   const days = useMemo(() => getCalendarDays(month), [month]);
   const eventsByDate = useMemo(() => {
@@ -55,7 +63,9 @@ export function MiniCalendar({ orders, onSelectDate }: { orders: Order[]; onSele
               type="button"
               onClick={() => onSelectDate?.(key)}
               className={`mx-auto flex h-9 w-9 flex-col items-center justify-center rounded-lg text-sm transition ${
-                hasEvent
+                selectedDate === key
+                  ? "bg-accent text-white ring-1 ring-accent/60"
+                  : hasEvent
                   ? event?.past
                     ? "bg-red-500/20 text-red-100 ring-1 ring-red-400/30"
                     : "bg-emerald-500/20 text-emerald-100 ring-1 ring-emerald-400/30"

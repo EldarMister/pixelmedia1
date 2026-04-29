@@ -1,15 +1,17 @@
 import { BriefcaseBusiness, CalendarDays, ChevronRight, WalletCards } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { StatusBadge, TypeBadge } from "../components/Badges";
 import { MetricCard } from "../components/MetricCard";
 import { MiniCalendar } from "../components/MiniCalendar";
-import { formatOrderDate, startOfWeek, toDateKey } from "../lib/date";
+import { formatLongDate, formatOrderDate, startOfWeek, toDateKey } from "../lib/date";
 import { money } from "../lib/format";
 import type { Order } from "../types";
 
 export function Dashboard({ orders }: { orders: Order[] }) {
   const navigate = useNavigate();
   const today = toDateKey(new Date());
+  const [selectedDate, setSelectedDate] = useState(today);
   const weekStart = startOfWeek(new Date());
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekEnd.getDate() + 7);
@@ -26,9 +28,14 @@ export function Dashboard({ orders }: { orders: Order[] }) {
     .filter((order) => !order.deletedAt && order.date >= today)
     .sort((a, b) => `${a.date}${a.time || ""}`.localeCompare(`${b.date}${b.time || ""}`))
     .slice(0, 6);
-  const todayOrders = orders
-    .filter((order) => !order.deletedAt && order.date === today)
-    .sort((a, b) => (a.time || "").localeCompare(b.time || ""));
+  const selectedDateOrders = useMemo(
+    () =>
+      orders
+        .filter((order) => !order.deletedAt && order.date === selectedDate)
+        .sort((a, b) => (a.time || "").localeCompare(b.time || "")),
+    [orders, selectedDate]
+  );
+  const selectedDateTitle = selectedDate === today ? "Сегодня" : "События дня";
 
   return (
     <div className="space-y-5">
@@ -100,14 +107,14 @@ export function Dashboard({ orders }: { orders: Order[] }) {
         <aside className="space-y-5">
           <section className="panel p-5">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-white">Сегодня</h2>
-              <Link to="/calendar" className="text-sm text-slate-400 hover:text-white">
-                Все события
-              </Link>
+              <div>
+                <h2 className="text-lg font-bold text-white">{selectedDateTitle}</h2>
+                <p className="text-sm capitalize text-slate-400">{formatLongDate(selectedDate)}</p>
+              </div>
             </div>
             <div className="space-y-4">
-              {todayOrders.length ? (
-                todayOrders.map((order) => (
+              {selectedDateOrders.length ? (
+                selectedDateOrders.map((order) => (
                   <button
                     key={order.id}
                     type="button"
@@ -125,11 +132,11 @@ export function Dashboard({ orders }: { orders: Order[] }) {
                   </button>
                 ))
               ) : (
-                <p className="text-sm text-slate-400">На сегодня событий нет.</p>
+                <p className="text-sm text-slate-400">На выбранный день событий нет.</p>
               )}
             </div>
           </section>
-          <MiniCalendar orders={orders} onSelectDate={() => navigate("/calendar")} />
+          <MiniCalendar orders={orders} selectedDate={selectedDate} onSelectDate={setSelectedDate} />
         </aside>
       </div>
     </div>

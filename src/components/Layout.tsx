@@ -1,4 +1,4 @@
-import { BarChart3, CalendarDays, Home, Plus, Search, ShoppingBag, Sparkles, UserRound } from "lucide-react";
+import { BarChart3, Home, Plus, Search, ShoppingBag, Sparkles, UserRound } from "lucide-react";
 import type { ReactNode } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { initials } from "../lib/format";
@@ -6,7 +6,6 @@ import { initials } from "../lib/format";
 const navItems = [
   { to: "/", label: "Главная", icon: Home },
   { to: "/orders", label: "Заказы", icon: ShoppingBag },
-  { to: "/calendar", label: "Календарь", icon: CalendarDays },
   { to: "/reports", label: "Отчёты", icon: BarChart3 }
 ];
 
@@ -98,7 +97,7 @@ export function Layout({
 
       <main className="mx-auto max-w-[1740px] px-1 py-7 md:px-8 md:py-8">{children}</main>
 
-      <nav className="fixed inset-x-3 bottom-3 z-40 grid grid-cols-4 rounded-lg border border-white/10 bg-navy-950/90 p-1 shadow-soft backdrop-blur md:hidden">
+      <nav className="fixed inset-x-3 bottom-3 z-40 grid grid-cols-3 rounded-lg border border-white/10 bg-navy-950/90 p-1 shadow-soft backdrop-blur md:hidden">
         {navItems.map((item) => {
           const Icon = item.icon;
           return (
